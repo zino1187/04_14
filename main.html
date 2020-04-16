@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<style>
+#container{
+    width:100%;
+    height:600px;
+    overflow: hidden;/*화면에 가려진 맵이나 아이템들에 의해 스크롤X*/
+    position: relative;
+    background-image: url("../images/megaman/bg.jpg");
+    background-size: 100% 600px;
+}    
+</style>    
+<script src="ObjectManager.js"></script>
+<script src="GameObject.js"></script>
+<script src="Enemy.js"></script>
+<script src="Megaman.js"></script>
+<script src="Block.js"></script>
+<script src="Bullet.js"></script>
+<script src="Sensor.js"></script>
+<script src="../js/lib.js"></script>
+<script>
+var container;   
+var objectManager; //객체 관리자!!
+var megaman;
+var map=[
+    [0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0]
+];
+var rect=[];
+
+window.addEventListener("load",function(){
+    container = document.getElementById("container");
+    objectManager = new ObjectManager();//전담자 인스턴스 생성
+
+    createEnemy();
+    createMegaman();
+    createSensor();
+    createBlock();
+
+    gameLoop();
+    
+    //키보드 이벤트 구현!!
+    document.body.addEventListener("keydown", function(e){
+        switch(e.keyCode){
+            case 32:fire();break;
+            case 37:megaman.velX=-5;break;
+            case 39:megaman.velX=5;break;
+        }
+    });
+
+    document.body.addEventListener("keyup", function(e){
+        switch(e.keyCode){
+            case 37:megaman.velX=0;break;
+            case 39:megaman.velX=0;break;
+        }
+    });
+    
+}); 
+//적군생성
+function createEnemy(){
+    //container,src,width,height,velX,velY,x,y
+    var enemy = new Enemy("Enemy",container,"../images/megaman/e2.gif",100,90,-1,0,600,400);
+
+    //생성된 적군을 객체 매니저에게 등록의뢰하자!!!
+    //왜 해야 하나? 등록만 하면 매니저가 알아서  tick(),render()해준다
+    objectManager.addObject(enemy);
+}
+//주인공 생성 
+function createMegaman(){
+    megaman = new Megaman("Megaman",container,"../images/megaman/rockman.gif",50,60,1,0,50,400);
+    objectManager.addObject(megaman);
+}
+
+function createSensor(){
+    var sensor = new Sensor("Sensor",container,megaman.width*0.8 , megaman.height*0.1,megaman.x+(megaman.x)*0.8, megaman.y);
+    objectManager.addObject(sensor);
+}
+
+//총알 발사
+function fire(){
+    var bullet=new Bullet("Bullet",container,"../images/megaman/bullet.png",20,16,12,0,megaman.x,megaman.y);
+    objectManager.addObject(bullet);
+}
+
+//블럭 생성 
+function createBlock(){
+    for(var a=0;a<map.length;a++){
+        for(var i=0;i<map[a].length;i++){
+            if(map[a][i]==1){//벽돌값 1이 발견되면..
+                var block=new Block("Block",container,"../images/mario/block.jpg",50,50,0,0,i*50,a*50);   
+                objectManager.addObject(block);//등록!!
+            }
+        }
+    }
+}
+
+function gameLoop(){
+    console.log("gameLoop() called...");
+
+    //tick(),render() 뿐 아니라, 화면에서 제거되어야 할 처리를 
+    //전담할 객체를 하나두면 유지보수하기 편하다!!!
+    //선택사항 이지만 유지보수성을 높이기 때문에, 이 개발패턴을 
+    //따르면 좋다..이렇게 개발패턴을 강요하는 방식을 프레임워크라한다
+    //프레임워크를 이용하면 개발시간 단축, 유지보수성이 높아진다..
+    //현실분야에서 프레임워크 : 사발면!!
+    objectManager.tick();
+    objectManager.render();
+
+    setTimeout("gameLoop()",10);
+}
+</script>    
+</head>
+<body>
+    <div id="container"></div>
+</body>
+</html>
